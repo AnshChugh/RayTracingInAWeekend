@@ -1,5 +1,4 @@
 #include "main_header.h"
-<<<<<<< HEAD
 #include "hittable.h"
 #include "hittable_list.h"
 #include "sphere.h"
@@ -14,8 +13,6 @@ color ray_color(const ray& r , const hittable& world){
     auto a = 0.5*(unit_direction.y() + 1.0);
     return (1.0-a)*color(1.0, 1.0, 1.0) + a*color(0.5, 0.7, 1.0);
 }
-=======
->>>>>>> cac693248b7c61ab7a7cd704a216756d8d2c0806
 
 
 color ray_color(const ray& r){
