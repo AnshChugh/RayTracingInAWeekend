@@ -18,13 +18,13 @@ public:
         objects.push_back(object);
     }
 
-    bool hit(const ray& r, double ray_tmin , double ray_tmax , hit_record& rec) const override {
+    bool hit(const ray& r, interval ray_t , hit_record& rec) const override {
         hit_record temp_record;
         bool hit_anything = false;
-        auto closest_so_far = ray_tmax;
+        auto closest_so_far = ray_t.max;
 
         for(const auto& object: objects){
-            if(object->hit(r, ray_tmin ,ray_tmax, temp_record) && temp_record.t <= closest_so_far){
+            if(object->hit(r, interval(ray_t.min,closest_so_far), temp_record)){
                 hit_anything = true;
                 closest_so_far = temp_record.t;
                 rec = temp_record;
