@@ -1,24 +1,5 @@
-#include "color.h"
-#include "vec3.h"
-#include "ray.h"
-#include <iostream>
+#include "main_header.h"
 
-double hit_sphere(const point3& center, double radius, const ray& r){
-    // substituting b = -2h we get these simpler formulas
-    auto oc = center - r.origin();
-    auto a = r.direction().length_squared();
-    auto h = dot(r.direction(), oc);
-    auto c = oc.length_squared() - radius*radius;
-    auto discriminant = h*h - a*c;
-
-    if(discriminant >= 0){
-        // hit point can be calculated in terms of t so we return t
-        return (h - sqrt(discriminant))/a;
-    }
-    else{
-        return -1.0;
-    }
-}
 
 color ray_color(const ray& r){
     auto t = hit_sphere(point3(0,0,-1),0.5,r);
