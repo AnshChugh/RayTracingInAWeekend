@@ -1,10 +1,14 @@
 #ifndef HITTABLE_LIST_H
 #define HITTABLE_LIST_H
 
+<<<<<<< HEAD
 #include "hittable.h"
 
 
 #include <vector>
+=======
+#include "main_header.h"
+>>>>>>> cac693248b7c61ab7a7cd704a216756d8d2c0806
 
 
 class hittable_list : public hittable{
