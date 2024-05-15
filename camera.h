@@ -8,6 +8,8 @@ class camera{
 public:
     double aspect_ratio = 1.0;
     int image_width = 100;
+    int samples_per_pixel = 10;
+
     // render
     void render(hittable_list& world){
         initialize();
@@ -16,12 +18,12 @@ public:
         for(int j = 0; j < image_height ;j++){
             std::clog << "\rScanlines remaining: " << (image_height - j) << ' ' << std::flush;
             for(int i = 0; i< image_width; i++){
-                auto pixel_center = pixel00_loc + (i * pixel_delta_u) + (j * pixel_delta_v);
-                auto ray_direction = pixel_center - camera_center;
-                ray r(camera_center , ray_direction);
-
-                color pixel_color = ray_color(r,world);
-                write_color(std::cout , pixel_color);
+                color pixel_color(0,0,0);
+                for(int samples = 0; samples < samples_per_pixel; samples++){
+                    ray r = get_ray(i,j);
+                    pixel_color += ray_color(r,world);
+                }
+                write_color(std::cout,pixel_samples_scale * pixel_color);
             }
         }
         std::clog << "\rDone.               \n";
@@ -30,6 +32,7 @@ private:
 
     int image_height;
     point3 camera_center;
+    double pixel_samples_scale;
     point3 pixel00_loc;
     vec3 pixel_delta_u;
     vec3 pixel_delta_v;
@@ -39,26 +42,43 @@ private:
         image_height = int(image_width/aspect_ratio);
         image_height = (image_height < 1) ? 1 : image_height;
 
-    // determine viewport dimensions
-    auto focal_length = 1.0;
-    auto viewport_height = 2.0;
-    auto viewport_width = viewport_height * (double(image_width)/ image_height);
-    camera_center = point3(0,0,0);
+        pixel_samples_scale = 1.0 / samples_per_pixel;
+        // determine viewport dimensions
+        auto focal_length = 1.0;
+        auto viewport_height = 2.0;
+        auto viewport_width = viewport_height * (double(image_width)/ image_height);
+        camera_center = point3(0,0,0);
 
-    // calculate the vectors across horizontal and down the vertical edges
-    auto viewport_u = vec3(viewport_width , 0 , 0);
-    auto viewport_v = vec3(0 , -viewport_height , 0);
+        // calculate the vectors across horizontal and down the vertical edges
+        auto viewport_u = vec3(viewport_width , 0 , 0);
+        auto viewport_v = vec3(0 , -viewport_height , 0);
 
-    // horizontal and verticle delta vectors
-    pixel_delta_u = viewport_u/image_width;
-    pixel_delta_v = viewport_v/image_height;
+        // horizontal and verticle delta vectors
+        pixel_delta_u = viewport_u/image_width;
+        pixel_delta_v = viewport_v/image_height;
 
-    // calculate the location of upper left pixel
-    // refer to diagram in the book for this part
-    auto viewport_upper_left = camera_center - vec3(0,0, focal_length) - viewport_u/2 - viewport_v/2;
-    pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
+        // calculate the location of upper left pixel
+        // refer to diagram in the book for this part
+        auto viewport_upper_left = camera_center - vec3(0,0, focal_length) - viewport_u/2 - viewport_v/2;
+        pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
     }
 
+    ray get_ray(int i ,int j) const {
+        // Construct a camera ray originating from the origin and directed at randomly sampled
+        // point around the pixel location i, j
+        auto offset = sample_square();
+        auto pixel_sample = pixel00_loc + ((i+offset.x()) * pixel_delta_u) + ((j + offset.y()) * pixel_delta_v);
+
+        auto ray_origin = camera_center;
+        auto ray_direction = pixel_sample - ray_origin;
+        return ray(ray_origin, ray_direction);
+    }
+
+    vec3 sample_square() const {
+        // Returns the vector to a random point in the [-.5,-.5]-[+.5,+.5] unit square.
+
+        return vec3(random_double() - 0.5, random_double() - 0.5, 0);
+    }
     color ray_color(const ray& r , const hittable& world){
         hit_record rec;
         if(world.hit(r,interval(0,infinity) , rec)){
