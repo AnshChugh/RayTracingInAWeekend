@@ -9,7 +9,7 @@ public:
     double aspect_ratio = 1.0;
     int image_width = 100;
     // render
-    void render(){
+    void render(hittable_list& world){
         initialize();
         std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
 
@@ -56,7 +56,7 @@ private:
     // calculate the location of upper left pixel
     // refer to diagram in the book for this part
     auto viewport_upper_left = camera_center - vec3(0,0, focal_length) - viewport_u/2 - viewport_v/2;
-    pixel00loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
+    pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
     }
 
     color ray_color(const ray& r , const hittable& world){

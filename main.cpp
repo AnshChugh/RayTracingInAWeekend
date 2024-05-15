@@ -18,7 +18,7 @@ int main(){
     cam.aspect_ratio = 16.0/9.0;
     cam.image_width = 1024;
 
-    cam.render();
+    cam.render(world);
 
 
     return 0;
