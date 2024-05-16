@@ -3,6 +3,10 @@
 
 #include "main_header.h"
 #include "hittable.h"
+#include "material.h"
+
+
+
 
 class camera{
 public:
@@ -81,11 +85,16 @@ private:
         return vec3(random_double() - 0.5, random_double() - 0.5, 0);
     }
     color ray_color(const ray& r ,int max_depth, const hittable& world){
+
         if(max_depth < 1) return color(0,0,0);
         hit_record rec;
         if(world.hit(r,interval(0.001,infinity) , rec)){
-            vec3 direction = rec.normal + random_unit_vector();
-            return 0.5 * ray_color(ray(rec.p,direction),max_depth - 1,world);
+            ray scattered;
+            color attenuation;
+            if(rec.mat->scatter(r,rec,attenuation,scattered)){
+                return attenuation * ray_color(scattered , max_depth-1,world);
+            }
+            return color(0,0,0);
         }
         vec3 unit_direction = unit_vector(r.direction());
         auto a = 0.5*(unit_direction.y() + 1.0);
