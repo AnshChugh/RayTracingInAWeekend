@@ -15,6 +15,11 @@ public:
     int samples_per_pixel = 10;
     int max_depth = 10;
 
+    double vfov = 90; // verticle view angle (field of view)
+    point3 lookfrom = point3(0,0,0);
+    point3 lookat = point3(0,0,-1);
+    vec3 vup = vec3(0,1,0);
+
     // render
     void render(hittable_list& world){
         initialize();
@@ -41,6 +46,7 @@ private:
     point3 pixel00_loc;
     vec3 pixel_delta_u;
     vec3 pixel_delta_v;
+    vec3 u, v, w;
 
     void initialize(){
 
@@ -48,15 +54,23 @@ private:
         image_height = (image_height < 1) ? 1 : image_height;
 
         pixel_samples_scale = 1.0 / samples_per_pixel;
+
+
         // determine viewport dimensions
-        auto focal_length = 1.0;
-        auto viewport_height = 2.0;
+        auto focal_length = (lookfrom - lookat).length();
+        auto theta = degrees_to_radians(vfov);
+        auto h = tan(theta/2);
+        auto viewport_height = 2 * h * focal_length;
         auto viewport_width = viewport_height * (double(image_width)/ image_height);
-        camera_center = point3(0,0,0);
+        camera_center = lookfrom;
+
+        w = unit_vector(lookfrom - lookat);
+        u = unit_vector(cross(vup, w));
+        v = cross(w, u);
 
         // calculate the vectors across horizontal and down the vertical edges
-        auto viewport_u = vec3(viewport_width , 0 , 0);
-        auto viewport_v = vec3(0 , -viewport_height , 0);
+        auto viewport_u = viewport_width * u;
+        auto viewport_v = viewport_height * -v;
 
         // horizontal and verticle delta vectors
         pixel_delta_u = viewport_u/image_width;
@@ -64,7 +78,7 @@ private:
 
         // calculate the location of upper left pixel
         // refer to diagram in the book for this part
-        auto viewport_upper_left = camera_center - vec3(0,0, focal_length) - viewport_u/2 - viewport_v/2;
+        auto viewport_upper_left = camera_center - (focal_length * w) - viewport_u/2 - viewport_v/2;
         pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
     }
 

@@ -30,20 +30,22 @@ public:
 private:
     color albedo;
 };
-class metal: public material{
+class metal : public material {
+  public:
+    metal(const color& albedo, double fuzz) : albedo(albedo), fuzz(fuzz < 1 ? fuzz : 1) {}
 
-public:
-    metal(const color& albedo) : albedo(albedo) {}
-
-    bool scatter(const ray& r_in , const hit_record& rec, color& attenuation , ray& scattered) const override {
-
+    bool scatter(const ray& r_in, const hit_record& rec, color& attenuation, ray& scattered)
+    const override {
         vec3 reflected = reflect(r_in.direction(), rec.normal);
-        scattered = ray(rec.p , reflected);
+        reflected = unit_vector(reflected) + (fuzz * random_unit_vector());
+        scattered = ray(rec.p, reflected);
         attenuation = albedo;
-        return true;
+        return (dot(scattered.direction(), rec.normal) > 0);
     }
-private:
+
+  private:
     color albedo;
+    double fuzz;
 };
 
 class dielectric: public material{
