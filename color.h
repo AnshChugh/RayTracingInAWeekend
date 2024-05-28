@@ -4,7 +4,8 @@
 #include "main_header.h"
 #include "vec3.h"
 #include "interval.h"
-
+#include <vector>
+#include <string>
 
 using color = vec3;
 
@@ -36,6 +37,42 @@ void write_color(std::ostream& out, const color& pixel_color) {
     // Write out the pixel color components.
     out << rbyte << ' ' << gbyte << ' ' << bbyte << '\n';
 }
+
+void write_color_to_vector(std::vector<char>& buffer, const color& pixel_color){
+    auto r = pixel_color.x();
+    auto g = pixel_color.y();
+    auto b = pixel_color.z();
+
+    // Apply a linear to gamma transform for gamma 2
+    r = linear_to_gamma(r);
+    g = linear_to_gamma(g);
+    b = linear_to_gamma(b);
+
+    // Translate the [0,1] component values to the byte range [0,255].
+    static const interval intensity(0.000,0.999);
+    int rbyte = int(255.999 * intensity.clamp(r));
+    int gbyte = int(255.999 * intensity.clamp(g));
+    int bbyte = int(255.999 * intensity.clamp(b));
+
+    // Write out the pixel color components.
+    // Convert the integer to a string
+    std::string byteStr = std::to_string(rbyte);
+    // Insert the entire string into the vector
+    buffer.insert(buffer.end(), byteStr.begin(), byteStr.end());
+    buffer.push_back(' ');
+
+    byteStr = std::to_string(gbyte);
+    buffer.insert(buffer.end(), byteStr.begin(), byteStr.end());
+
+    buffer.push_back(' ');
+
+
+    byteStr = std::to_string(bbyte);
+    buffer.insert(buffer.end(), byteStr.begin(), byteStr.end());
+
+    buffer.push_back('\n');
+}
+
 
 
 #endif

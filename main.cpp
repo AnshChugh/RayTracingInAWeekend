@@ -4,12 +4,14 @@
 #include "sphere.h"
 #include "camera.h"
 #include "material.h"
+#include <thread>
+#include <vector>
+#include <fstream>
+#include <cmath>
 
 int main(){
 
     hittable_list world;
-
-    // world
 
     auto ground_material = make_shared<lambertian>(color(0.5, 0.5, 0.5));
     world.add(make_shared<sphere>(point3(0,-1000,0), 1000, ground_material));
@@ -48,13 +50,14 @@ int main(){
     auto material2 = make_shared<lambertian>(color(0.4, 0.2, 0.1));
     world.add(make_shared<sphere>(point3(-4, 1, 0), 1.0, material2));
 
+
     auto material3 = make_shared<metal>(color(0.7, 0.6, 0.5), 0.0);
     world.add(make_shared<sphere>(point3(4, 1, 0), 1.0, material3));
 
     camera cam;
 
     cam.aspect_ratio      = 16.0 / 9.0;
-    cam.image_width       = 1200;
+    cam.image_width       = 400;
     cam.samples_per_pixel = 500;
     cam.max_depth         = 50;
 
@@ -66,7 +69,41 @@ int main(){
     cam.defocus_angle = 0.6;
     cam.focus_dist    = 10.0;
 
-    cam.render(world);
+
+
+
+    // threading
+    cam.initialize();
+    int numThreads = 12;
+    int height_per_thread = static_cast<int>(std::floor((cam.image_width/cam.aspect_ratio)/numThreads));
+
+    std::vector<std::vector<char>> buffers(numThreads);
+    std::vector<std::thread> threads;
+
+    for(int i = 0; i < numThreads; i++){
+        int start = i* height_per_thread;
+        int end = (i == numThreads - 1) ? static_cast<int>(cam.image_width / cam.aspect_ratio) - 1 :  height_per_thread * (i + 1) - 1;
+        threads.emplace_back(&camera::renderLines , &cam,  std::ref(world), std::ref(buffers[i]), start, end);
+    }
+
+    for(auto& t: threads){
+        if(t.joinable()){
+            t.join();
+        }
+    }
+
+    std::ofstream outFile("newImage.ppm");
+
+    if(outFile.is_open()){
+        outFile << "P3\n" << cam.image_width << ' ' << int(cam.image_width/cam.aspect_ratio) << "\n255\n";
+        for(const auto& buffer : buffers){
+            outFile.write(buffer.data(), buffer.size());
+        }
+        outFile.close();
+    }
+
+    //cam.render(world);
+
 
     return 0;
 }

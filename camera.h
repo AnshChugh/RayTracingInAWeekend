@@ -4,8 +4,7 @@
 #include "main_header.h"
 #include "hittable.h"
 #include "material.h"
-
-
+#include <vector>
 
 
 class camera{
@@ -23,6 +22,8 @@ public:
     double defocus_angle = 0;
     double focus_dist = 10;
 
+
+    //
     // render
     void render(hittable_list& world){
         initialize();
@@ -41,19 +42,19 @@ public:
         }
         std::clog << "\rDone.               \n";
     }
-private:
-
-    int image_height; // rendered image height
-    point3 camera_center;
-    double pixel_samples_scale;
-    point3 pixel00_loc;
-    vec3 pixel_delta_u;
-    vec3 pixel_delta_v;
-    vec3 u, v, w;
-    vec3 defocus_disk_u;
-    vec3 defocus_disk_v;
-
-
+     void renderLines(hittable_list& world, std::vector<char>& buffer, int start_line, int end_line){
+        for(int j = start_line; j <= end_line ;j++){
+            std::clog << "r thread lines start = " << start_line << "  current: " << j << " , end = " << end_line <<" \n" << std::flush;
+            for(int i = 0; i < image_width;i++){
+                color pixel_color(0,0,0);
+                for(int samples = 0; samples < samples_per_pixel;samples++){
+                    ray r = get_ray(i, j);
+                    pixel_color += ray_color(r, max_depth , world);
+                }
+                write_color_to_vector(buffer, pixel_samples_scale * pixel_color);
+            }
+        }
+    }
     void initialize(){
 
         image_height = int(image_width/aspect_ratio);
@@ -92,6 +93,20 @@ private:
         defocus_disk_u = u * defocus_radius;
         defocus_disk_v = v * defocus_radius;
     }
+
+private:
+
+    int image_height; // rendered image height
+    point3 camera_center;
+    double pixel_samples_scale;
+    point3 pixel00_loc;
+    vec3 pixel_delta_u;
+    vec3 pixel_delta_v;
+    vec3 u, v, w;
+    vec3 defocus_disk_u;
+    vec3 defocus_disk_v;
+
+
 
     ray get_ray(int i ,int j) const {
         // Construct a camera ray originating from the origin and directed at randomly sampled
